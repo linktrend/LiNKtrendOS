@@ -56,7 +56,8 @@ git push -u origin wp-wave2-metrics
 
 ## Commit
 
-- **SHA:** `3c77883`
+- **SHA (feature):** `3c77883`
+- **SHA (branch tip):** `26d6260`
 - **Message:** `feat(linkaios-web): metrics Phase B scope filters and skill/tool breakdown`
 
 ## Blockers
