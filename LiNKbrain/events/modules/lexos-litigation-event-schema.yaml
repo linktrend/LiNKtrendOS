@@ -1,0 +1,758 @@
+# LiNKbrain Event Schema: lexos_litigation
+# Per UBS-WF #6, LiNKbrain/events/modules/lexos-litigation.md, and manifest.yaml required_audit_events.
+# Follows linkapps-event-schema.yaml structure for cross-module parity.
+
+namespace: lexos_litigation
+version: "1.0.0-mvo"
+description: Event and memory schema for LEXOS Litigation module integration with LiNKbrain
+
+# Core cross-plane lifecycle events (shared with all modules)
+cross_plane_events:
+  - event_id: run.started
+    description: Run lifecycle initiation
+    required_fields:
+      - run_id
+      - tenant_id
+      - plugin_id
+      - work_request_type
+    emitted_by:
+      - linkaios
+
+  - event_id: run.completed
+    description: Run successful completion
+    required_fields:
+      - run_id
+      - tenant_id
+      - stage_count
+      - audit_event_count
+    emitted_by:
+      - linkaios
+
+  - event_id: run.failed
+    description: Run failure with FailureReport
+    required_fields:
+      - run_id
+      - tenant_id
+      - failure.code
+      - failure.message
+      - failure.retryable
+    emitted_by:
+      - linkaios
+
+  - event_id: run.cancelled
+    description: Run cancelled by operator
+    required_fields:
+      - run_id
+      - tenant_id
+      - cancelled_by
+      - reason
+    emitted_by:
+      - linkaios
+
+  - event_id: stage.started
+    description: Stage execution start
+    required_fields:
+      - run_id
+      - stage_id
+      - tenant_id
+      - responsible_plane
+    emitted_by:
+      - linkaios
+
+  - event_id: stage.completed
+    description: Stage successful completion
+    required_fields:
+      - run_id
+      - stage_id
+      - tenant_id
+      - outputs_ref
+    emitted_by:
+      - linkaios
+
+  - event_id: stage.failed
+    description: Stage failure
+    required_fields:
+      - run_id
+      - stage_id
+      - tenant_id
+      - failure
+    emitted_by:
+      - linkaios
+
+  - event_id: stage.awaiting_approval
+    description: Stage paused for human approval
+    required_fields:
+      - run_id
+      - stage_id
+      - tenant_id
+      - approval_type
+    emitted_by:
+      - linkaios
+
+  - event_id: workflow.invoked
+    description: Workflow execution request
+    required_fields:
+      - run_id
+      - workflow_handle
+      - tenant_id
+      - idempotency_key
+    emitted_by:
+      - linkaios
+      - linkautowork
+
+  - event_id: workflow.completed
+    description: Workflow successful execution
+    required_fields:
+      - run_id
+      - workflow_run_id
+      - tenant_id
+      - outputs_ref
+    emitted_by:
+      - linkautowork
+
+  - event_id: workflow.failed
+    description: Workflow execution failure
+    required_fields:
+      - run_id
+      - workflow_run_id
+      - tenant_id
+      - failure
+    emitted_by:
+      - linkautowork
+
+  - event_id: lease.requested
+    description: Capability lease request
+    required_fields:
+      - run_id
+      - capability_id
+      - tenant_id
+      - operation
+      - idempotency_key
+    emitted_by:
+      - linkaios
+
+  - event_id: lease.granted
+    description: Lease granted by LinkSkills
+    required_fields:
+      - run_id
+      - lease_id
+      - tenant_id
+      - capability_id
+      - granted_until
+    emitted_by:
+      - linkskills
+
+  - event_id: lease.executed
+    description: Lease consumed by operation
+    required_fields:
+      - run_id
+      - lease_id
+      - tenant_id
+      - operation_result_ref
+    emitted_by:
+      - linkautowork
+
+  - event_id: lease.denied
+    description: Lease request denied
+    required_fields:
+      - run_id
+      - capability_id
+      - tenant_id
+      - denial_reason
+    emitted_by:
+      - linkskills
+
+  - event_id: role.started
+    description: LiNKbot role instance started
+    required_fields:
+      - run_id
+      - role_id
+      - tenant_id
+      - matter_id
+    emitted_by:
+      - linkbot
+
+  - event_id: role.completed
+    description: LiNKbot role instance completed
+    required_fields:
+      - run_id
+      - role_id
+      - tenant_id
+      - outputs_summary
+    emitted_by:
+      - linkbot
+
+  - event_id: role.failed
+    description: LiNKbot role instance failed
+    required_fields:
+      - run_id
+      - role_id
+      - tenant_id
+      - failure_reason
+    emitted_by:
+      - linkbot
+
+# LEXOS-specific domain events
+domain_events:
+  # W0: Client Onboarding
+  - event_id: intake.processed
+    description: Intake record created from new client/matter submission
+    stage: "W0"
+    required_fields:
+      - run_id
+      - tenant_id
+      - intake_id
+      - intake_type
+      - urgency_level
+    emitted_by:
+      - linkbot
+    memory_promotion:
+      - lexos_matter
+
+  - event_id: conflict.checked
+    description: Conflict check completed against existing clients/matters
+    stage: "W0"
+    required_fields:
+      - run_id
+      - tenant_id
+      - intake_id
+      - conflict_status
+      - check_method
+    emitted_by:
+      - linkbot
+
+  - event_id: client.accepted
+    description: Client promoted to active after approval
+    stage: "W0"
+    required_fields:
+      - run_id
+      - tenant_id
+      - client_id
+      - intake_id
+      - accepted_by
+    emitted_by:
+      - linkbot
+    memory_promotion:
+      - lexos_client
+
+  - event_id: client.rejected
+    description: Client/intake rejected
+    stage: "W0"
+    required_fields:
+      - run_id
+      - tenant_id
+      - intake_id
+      - rejection_reason
+      - reviewed_by
+    emitted_by:
+      - linkbot
+
+  - event_id: kyc.completed
+    description: KYC screening completed
+    stage: "W0"
+    required_fields:
+      - run_id
+      - tenant_id
+      - client_id
+      - kyc_status
+      - risk_level
+    emitted_by:
+      - linkbot
+
+  # W1: Client Master Record
+  - event_id: memory.updated
+    description: Client memory updated with new facts
+    stage: "W1"
+    required_fields:
+      - run_id
+      - tenant_id
+      - client_id
+      - update_type
+      - facts_added
+    emitted_by:
+      - linkbot
+
+  - event_id: promotion.processed
+    description: Fact promoted from intake to client master
+    stage: "W1"
+    required_fields:
+      - run_id
+      - tenant_id
+      - client_id
+      - source_intake_id
+      - promoted_facts
+    emitted_by:
+      - linkbot
+
+  # W2: Case-Client Story
+  - event_id: story.created
+    description: Case master story created
+    stage: "W2"
+    required_fields:
+      - run_id
+      - tenant_id
+      - case_story_id
+      - matter_id
+      - story_length
+    emitted_by:
+      - linkbot
+    memory_promotion:
+      - lexos_case_story
+
+  - event_id: assertions.extracted
+    description: Assertions extracted from case story
+    stage: "W2"
+    required_fields:
+      - run_id
+      - tenant_id
+      - case_story_id
+      - assertions_created
+      - by_truth_state
+    emitted_by:
+      - linkbot
+    memory_promotion:
+      - lexos_assertion_bundle
+
+  - event_id: timeline.built
+    description: Timeline events extracted from narrative
+    stage: "W2"
+    required_fields:
+      - run_id
+      - tenant_id
+      - case_story_id
+      - timeline_events_count
+    emitted_by:
+      - linkbot
+
+  - event_id: gaps.identified
+    description: Factual gaps identified in case story
+    stage: "W2"
+    required_fields:
+      - run_id
+      - tenant_id
+      - case_story_id
+      - gaps_count
+      - gap_categories
+    emitted_by:
+      - linkbot
+
+  # W4: Evidence Intake
+  - event_id: evidence.ingested
+    description: Evidence uploaded and stored
+    stage: "W4"
+    required_fields:
+      - run_id
+      - tenant_id
+      - evidence_id
+      - matter_id
+      - file_type
+      - file_size
+    emitted_by:
+      - linkautowork
+
+  - event_id: evidence.classified
+    description: Evidence classified by type, confidentiality, privilege
+    stage: "W4"
+    required_fields:
+      - run_id
+      - tenant_id
+      - evidence_id
+      - evidence_type
+      - confidentiality
+      - privilege
+    emitted_by:
+      - linkautowork
+
+  - event_id: extraction.queued
+    description: Extraction job queued for processing
+    stage: "W4"
+    required_fields:
+      - run_id
+      - tenant_id
+      - evidence_id
+      - extraction_id
+      - extraction_types
+    emitted_by:
+      - linkautowork
+
+  - event_id: extraction.started
+    description: Extraction processing started
+    stage: "W4"
+    required_fields:
+      - run_id
+      - tenant_id
+      - extraction_id
+      - processor_type
+    emitted_by:
+      - linkautowork
+
+  - event_id: extraction.completed
+    description: Extraction finished successfully
+    stage: "W4"
+    required_fields:
+      - run_id
+      - tenant_id
+      - extraction_id
+      - quality_score
+      - output_format
+    emitted_by:
+      - linkautowork
+
+  - event_id: extraction.failed
+    description: Extraction failed
+    stage: "W4"
+    required_fields:
+      - run_id
+      - tenant_id
+      - extraction_id
+      - failure_reason
+      - retry_eligible
+    emitted_by:
+      - linkautowork
+
+  - event_id: extraction.qa_flagged
+    description: Extraction QA flagged for review
+    stage: "W4"
+    required_fields:
+      - run_id
+      - tenant_id
+      - extraction_id
+      - qa_flags
+      - review_required
+    emitted_by:
+      - linkautowork
+
+  - event_id: qa.completed
+    description: QA validation completed for evidence extraction
+    stage: "W4"
+    required_fields:
+      - run_id
+      - tenant_id
+      - extraction_id
+      - qa_status
+      - quality_score
+    emitted_by:
+      - linkautowork
+
+  - event_id: custody.logged
+    description: Chain of custody updated for evidence
+    stage: "W4"
+    required_fields:
+      - run_id
+      - tenant_id
+      - evidence_id
+      - custody_action
+      - actor
+    emitted_by:
+      - linkautowork
+
+  # W5: Support Matrix
+  - event_id: support.mapped
+    description: Evidence-to-assertion mapping created
+    stage: "W5"
+    required_fields:
+      - run_id
+      - tenant_id
+      - support_matrix_item_id
+      - assertion_id
+      - evidence_id
+      - support_level
+    emitted_by:
+      - linkbot
+
+  - event_id: contradictions.found
+    description: Contradictions identified in support matrix
+    stage: "W5"
+    required_fields:
+      - run_id
+      - tenant_id
+      - matter_id
+      - contradiction_count
+      - severity_summary
+    emitted_by:
+      - linkbot
+
+  - event_id: assertion.state_changed
+    description: Assertion truth state updated
+    stage: "W5"
+    required_fields:
+      - run_id
+      - tenant_id
+      - assertion_id
+      - previous_state
+      - new_state
+      - reason
+    emitted_by:
+      - linkbot
+
+  # W6: Strategy
+  - event_id: strategy.developed
+    description: Strategy memo created
+    stage: "W6"
+    required_fields:
+      - run_id
+      - tenant_id
+      - strategy_memo_id
+      - matter_id
+      - strategy_points_count
+    emitted_by:
+      - linkbot
+    memory_promotion:
+      - lexos_strategy
+
+  - event_id: risks.identified
+    description: Risks registered from strategy analysis
+    stage: "W6"
+    required_fields:
+      - run_id
+      - tenant_id
+      - strategy_memo_id
+      - risks_count
+      - severity_breakdown
+    emitted_by:
+      - linkbot
+
+  - event_id: research.questions_defined
+    description: Research questions queued from strategy
+    stage: "W6"
+    required_fields:
+      - run_id
+      - tenant_id
+      - strategy_memo_id
+      - questions_count
+    emitted_by:
+      - linkbot
+
+  # W7: Legal Research
+  - event_id: research.performed
+    description: Research memo created (shared action with LinkSites)
+    stage: "W7"
+    required_fields:
+      - run_id
+      - tenant_id
+      - research_memo_id
+      - matter_id
+      - authorities_found
+    emitted_by:
+      - linkbot
+    memory_promotion:
+      - lexos_research
+
+  - event_id: citations.verified
+    description: Citations verified against sources
+    stage: "W7"
+    required_fields:
+      - run_id
+      - tenant_id
+      - research_memo_id
+      - citations_checked
+      - verification_rate
+    emitted_by:
+      - linkbot
+
+  - event_id: adverse.authority_found
+    description: Adverse authority identified
+    stage: "W7"
+    required_fields:
+      - run_id
+      - tenant_id
+      - research_memo_id
+      - authority_citation
+      - risk_level
+    emitted_by:
+      - linkbot
+
+  # W8: Argument Drafting
+  - event_id: argument.drafted
+    description: Argument draft created
+    stage: "W8"
+    required_fields:
+      - run_id
+      - tenant_id
+      - argument_draft_id
+      - matter_id
+      - argument_type
+    emitted_by:
+      - linkbot
+    memory_promotion:
+      - lexos_argument
+
+  - event_id: claims.linked
+    description: Claims linked to supporting evidence
+    stage: "W8"
+    required_fields:
+      - run_id
+      - tenant_id
+      - argument_draft_id
+      - supported_claims
+      - unsupported_claims
+    emitted_by:
+      - linkbot
+
+  - event_id: citations.inserted
+    description: Citations added to argument draft
+    stage: "W8"
+    required_fields:
+      - run_id
+      - tenant_id
+      - argument_draft_id
+      - citations_count
+    emitted_by:
+      - linkbot
+
+  # W9: Adversarial Review
+  - event_id: critique.completed
+    description: Adversarial critique created
+    stage: "W9"
+    required_fields:
+      - run_id
+      - tenant_id
+      - adversarial_critique_id
+      - argument_draft_id
+      - attack_vectors_count
+    emitted_by:
+      - linkbot
+
+  - event_id: weaknesses.found
+    description: Weaknesses identified in argument
+    stage: "W9"
+    required_fields:
+      - run_id
+      - tenant_id
+      - adversarial_critique_id
+      - weakness_count
+      - severity_breakdown
+    emitted_by:
+      - linkbot
+
+  - event_id: revision.checklist_created
+    description: Revision checklist generated from critique
+    stage: "W9"
+    required_fields:
+      - run_id
+      - tenant_id
+      - adversarial_critique_id
+      - checklist_items_count
+    emitted_by:
+      - linkbot
+
+  # W11: Output Refinement
+  - event_id: output.refined
+    description: Final output artifact created
+    stage: "W11"
+    required_fields:
+      - run_id
+      - tenant_id
+      - output_artifact_id
+      - matter_id
+      - file_format
+    emitted_by:
+      - linkbot
+    memory_promotion:
+      - lexos_output
+
+  - event_id: caveats.preserved
+    description: Caveats verified preserved in final output
+    stage: "W11"
+    required_fields:
+      - run_id
+      - tenant_id
+      - output_artifact_id
+      - caveats_preserved
+      - missing_caveats
+    emitted_by:
+      - linkbot
+
+  - event_id: bundle.prepared
+    description: Final bundle assembled for delivery
+    stage: "W11"
+    required_fields:
+      - run_id
+      - tenant_id
+      - output_artifact_id
+      - bundle_contents
+      - artifact_uri
+    emitted_by:
+      - linkbot
+
+# Memory Object Promotion Rules
+memory_promotion:
+  - source_event: client.accepted
+    target_type: lexos_client
+    retention: persistent
+    scope: tenant
+
+  - source_event: intake.processed
+    target_type: lexos_matter
+    retention: persistent
+    scope: tenant
+
+  - source_event: story.created
+    target_type: lexos_case_story
+    retention: matter_bound
+    scope: matter
+
+  - source_event: assertions.extracted
+    target_type: lexos_assertion_bundle
+    retention: matter_bound
+    scope: matter
+
+  - source_event: strategy.developed
+    target_type: lexos_strategy
+    retention: matter_bound
+    scope: matter
+
+  - source_event: research.performed
+    target_type: lexos_research
+    retention: matter_bound
+    scope: matter
+
+  - source_event: argument.drafted
+    target_type: lexos_argument
+    retention: matter_bound
+    scope: matter
+
+  - source_event: output.refined
+    target_type: lexos_output
+    retention: persistent
+    scope: matter
+
+# Context Assembly Requirements (for LiNKbot reasoning)
+context_assembly:
+  - context_type: matter_context
+    description: Current matter state, workflow stage, key assertions
+    memory_types:
+      - lexos_matter
+      - lexos_case_story
+      - lexos_assertion_bundle
+
+  - context_type: client_context
+    description: Client master record, history, facts
+    memory_types:
+      - lexos_client
+
+  - context_type: evidence_context
+    description: Recent evidence, extractions, quality flags
+    memory_types: []
+    note: Evidence data accessed via capability connectors, not memory objects
+
+  - context_type: support_context
+    description: Support matrix state, contradictions, gaps
+    memory_types:
+      - lexos_assertion_bundle
+
+  - context_type: strategy_context
+    description: Strategy memo, risks, research questions
+    memory_types:
+      - lexos_strategy
+
+  - context_type: research_context
+    description: Legal authorities, citations, adverse authority
+    memory_types:
+      - lexos_research
+
+  - context_type: argument_context
+    description: Draft arguments, critique responses
+    memory_types:
+      - lexos_argument
+      - lexos_output
