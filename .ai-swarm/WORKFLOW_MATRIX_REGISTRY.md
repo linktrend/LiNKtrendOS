@@ -35,6 +35,10 @@
 
 ## Completed Lanes (archive)
 
-| row_id | canonical_session_name | domain | suite | section | completed_utc | outcome |
-|--------|------------------------|--------|-------|---------|---------------|---------|
-| —      | —                      | —      | —     | —       | —             | —       |
+| row_id | canonical_session_name | domain | suite | section | completed_utc | outcome | gate_verdict |
+|--------|------------------------|--------|-------|---------|---------------|---------|--------------|
+| R002 | UBS-IT-LSKILLS-GOV-W1-L01-SLOCK | IT | LSKILLS | GOV | 2026-05-18T23:59:00Z | WP-203 complete | PASS |
+| R003 | UBS-IT-LSKILLS-ENFORCE-W1-L02-SLOCK | IT | LSKILLS | ENFORCE | 2026-05-18T23:59:00Z | WP-213 complete | PASS |
+| R004 | UBS-IT-LBOT-ROLES-W1-L03-SLOCK | IT | LBOT | ROLES | 2026-05-18T23:59:00Z | WP-214 complete | PASS |
+| R005 | UBS-IT-LBRAIN-TRACE-W1-L04-SLOCK | IT | LBRAIN | TRACE | 2026-05-18T23:59:00Z | WP-215 complete | PASS |
+| R006 | UBS-IT-LAWORK-STATUS-W1-L05-SLOCK | IT | LAWORK | STATUS | 2026-05-18T23:59:00Z | WP-217 complete | PASS |
