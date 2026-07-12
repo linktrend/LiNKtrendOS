@@ -33,6 +33,15 @@ export const MemoryObjectTypeSchema = z.enum([
   "episode_summary",
   "capability_lease_record",
   "workflow_run_record",
+  // LEXOS Litigation memory object types (lexos-litigation.md §Memory Object Promotion)
+  "lexos_client",
+  "lexos_matter",
+  "lexos_case_story",
+  "lexos_assertion_bundle",
+  "lexos_strategy",
+  "lexos_research",
+  "lexos_argument",
+  "lexos_output",
 ]);
 export type MemoryObjectType = z.infer<typeof MemoryObjectTypeSchema>;
 
@@ -223,6 +232,108 @@ export const EpisodeSummaryPayloadSchema = z.object({
 export type EpisodeSummaryPayload = z.infer<typeof EpisodeSummaryPayloadSchema>;
 
 /* -------------------------------------------------------------------------- */
+/* LEXOS Litigation — Memory Object Payloads                                    */
+/* (lexos-litigation.md §Memory Object Promotion)                               */
+/* -------------------------------------------------------------------------- */
+
+export const LexosClientPayloadSchema = z.object({
+  client_id: z.string().min(1),
+  tenant_id: z.string().min(1),
+  intake_id: z.string().min(1),
+  accepted_by: z.string().min(1),
+  conflict_status: z.string().min(1),
+  kyc_status: z.string().optional(),
+  risk_level: z.string().optional(),
+  matter_ids: z.array(z.string()).default([]),
+  source_run_id: z.string().uuid().optional(),
+});
+export type LexosClientPayload = z.infer<typeof LexosClientPayloadSchema>;
+
+export const LexosMatterPayloadSchema = z.object({
+  matter_id: z.string().min(1),
+  tenant_id: z.string().min(1),
+  client_id: z.string().min(1),
+  matter_type: z.string().min(1),
+  jurisdiction: z.string().optional(),
+  current_stage: z.string().optional(),
+  source_run_id: z.string().uuid().optional(),
+});
+export type LexosMatterPayload = z.infer<typeof LexosMatterPayloadSchema>;
+
+export const LexosCaseStoryPayloadSchema = z.object({
+  case_story_id: z.string().min(1),
+  tenant_id: z.string().min(1),
+  matter_id: z.string().min(1),
+  story_length: z.number().int().min(0).optional(),
+  assertions_count: z.number().int().min(0).optional(),
+  timeline_events_count: z.number().int().min(0).optional(),
+  gaps_count: z.number().int().min(0).optional(),
+  content_ref: z.string().optional(),
+  source_run_id: z.string().uuid().optional(),
+});
+export type LexosCaseStoryPayload = z.infer<typeof LexosCaseStoryPayloadSchema>;
+
+export const LexosAssertionBundlePayloadSchema = z.object({
+  case_story_id: z.string().min(1),
+  tenant_id: z.string().min(1),
+  matter_id: z.string().min(1),
+  assertions_created: z.number().int().min(0),
+  by_truth_state: z.record(z.string(), z.number()).optional(),
+  source_run_id: z.string().uuid().optional(),
+});
+export type LexosAssertionBundlePayload = z.infer<typeof LexosAssertionBundlePayloadSchema>;
+
+export const LexosStrategyPayloadSchema = z.object({
+  strategy_memo_id: z.string().min(1),
+  tenant_id: z.string().min(1),
+  matter_id: z.string().min(1),
+  strategy_points_count: z.number().int().min(0).optional(),
+  risks_count: z.number().int().min(0).optional(),
+  research_questions_count: z.number().int().min(0).optional(),
+  content_ref: z.string().optional(),
+  source_run_id: z.string().uuid().optional(),
+});
+export type LexosStrategyPayload = z.infer<typeof LexosStrategyPayloadSchema>;
+
+export const LexosResearchPayloadSchema = z.object({
+  research_memo_id: z.string().min(1),
+  tenant_id: z.string().min(1),
+  matter_id: z.string().min(1),
+  authorities_found: z.number().int().min(0).optional(),
+  citations_checked: z.number().int().min(0).optional(),
+  verification_rate: z.number().min(0).max(1).optional(),
+  content_ref: z.string().optional(),
+  source_run_id: z.string().uuid().optional(),
+});
+export type LexosResearchPayload = z.infer<typeof LexosResearchPayloadSchema>;
+
+export const LexosArgumentPayloadSchema = z.object({
+  argument_draft_id: z.string().min(1),
+  tenant_id: z.string().min(1),
+  matter_id: z.string().min(1),
+  argument_type: z.string().optional(),
+  supported_claims: z.number().int().min(0).optional(),
+  unsupported_claims: z.number().int().min(0).optional(),
+  citations_count: z.number().int().min(0).optional(),
+  content_ref: z.string().optional(),
+  source_run_id: z.string().uuid().optional(),
+});
+export type LexosArgumentPayload = z.infer<typeof LexosArgumentPayloadSchema>;
+
+export const LexosOutputPayloadSchema = z.object({
+  output_artifact_id: z.string().min(1),
+  tenant_id: z.string().min(1),
+  matter_id: z.string().min(1),
+  file_format: z.string().optional(),
+  caveats_preserved: z.number().int().min(0).optional(),
+  missing_caveats: z.number().int().min(0).optional(),
+  bundle_contents: z.array(z.string()).default([]),
+  artifact_uri: z.string().optional(),
+  source_run_id: z.string().uuid().optional(),
+});
+export type LexosOutputPayload = z.infer<typeof LexosOutputPayloadSchema>;
+
+/* -------------------------------------------------------------------------- */
 /* Memory Object Envelope (matches database schema)                             */
 /* -------------------------------------------------------------------------- */
 
@@ -233,6 +344,7 @@ export const MemoryObjectScopeSchema = z.object({
   // Additional scope dimensions
   project_id: z.string().optional(),
   site_id: z.string().optional(),
+  matter_id: z.string().optional(),
   // Tags for cross-cutting retrieval
   tags: z.array(z.string()).default([]),
 });
@@ -244,7 +356,19 @@ export const MemoryObjectEnvelopeSchema = z.object({
   type: MemoryObjectTypeSchema,
   scope: MemoryObjectScopeSchema,
   provenance_event_ids: z.array(z.string().uuid()),
-  payload: z.union([LeadMemoryPayloadSchema, ResearchBundlePayloadSchema, EpisodeSummaryPayloadSchema]),
+  payload: z.union([
+    LeadMemoryPayloadSchema,
+    ResearchBundlePayloadSchema,
+    EpisodeSummaryPayloadSchema,
+    LexosClientPayloadSchema,
+    LexosMatterPayloadSchema,
+    LexosCaseStoryPayloadSchema,
+    LexosAssertionBundlePayloadSchema,
+    LexosStrategyPayloadSchema,
+    LexosResearchPayloadSchema,
+    LexosArgumentPayloadSchema,
+    LexosOutputPayloadSchema,
+  ]),
   state: MemoryObjectStateSchema.default("active"),
   confidence: z.number().min(0).max(1).default(1.0),
   created_at: z.string().datetime().optional(),
@@ -280,7 +404,18 @@ export interface WriteMemoryObjectOptions {
   type: MemoryObjectType;
   scope: MemoryObjectScope;
   provenance_event_ids: string[];
-  payload: LeadMemoryPayload | ResearchBundlePayload | EpisodeSummaryPayload;
+  payload:
+    | LeadMemoryPayload
+    | ResearchBundlePayload
+    | EpisodeSummaryPayload
+    | LexosClientPayload
+    | LexosMatterPayload
+    | LexosCaseStoryPayload
+    | LexosAssertionBundlePayload
+    | LexosStrategyPayload
+    | LexosResearchPayload
+    | LexosArgumentPayload
+    | LexosOutputPayload;
   state?: MemoryObjectState;
   confidence?: number;
   source_plane: "linkaios" | "linkbot" | "linkskills" | "linkautowork" | "linkbrain";
@@ -557,11 +692,89 @@ function validateMemoryPayload(
       }
       return null;
     }
-    default:
-      return {
-        code: "MEMORY_TYPE_UNKNOWN",
-        message: `Unknown memory type: ${type}`,
-      };
+    case "capability_lease_record":
+    case "workflow_run_record":
+      return null;
+    case "lexos_client": {
+      const result = LexosClientPayloadSchema.safeParse(payload);
+      if (!result.success) {
+        return {
+          code: "MEMORY_PAYLOAD_INVALID",
+          message: `LexosClient payload invalid: ${result.error.issues[0]?.message ?? "unknown error"}`,
+        };
+      }
+      return null;
+    }
+    case "lexos_matter": {
+      const result = LexosMatterPayloadSchema.safeParse(payload);
+      if (!result.success) {
+        return {
+          code: "MEMORY_PAYLOAD_INVALID",
+          message: `LexosMatter payload invalid: ${result.error.issues[0]?.message ?? "unknown error"}`,
+        };
+      }
+      return null;
+    }
+    case "lexos_case_story": {
+      const result = LexosCaseStoryPayloadSchema.safeParse(payload);
+      if (!result.success) {
+        return {
+          code: "MEMORY_PAYLOAD_INVALID",
+          message: `LexosCaseStory payload invalid: ${result.error.issues[0]?.message ?? "unknown error"}`,
+        };
+      }
+      return null;
+    }
+    case "lexos_assertion_bundle": {
+      const result = LexosAssertionBundlePayloadSchema.safeParse(payload);
+      if (!result.success) {
+        return {
+          code: "MEMORY_PAYLOAD_INVALID",
+          message: `LexosAssertionBundle payload invalid: ${result.error.issues[0]?.message ?? "unknown error"}`,
+        };
+      }
+      return null;
+    }
+    case "lexos_strategy": {
+      const result = LexosStrategyPayloadSchema.safeParse(payload);
+      if (!result.success) {
+        return {
+          code: "MEMORY_PAYLOAD_INVALID",
+          message: `LexosStrategy payload invalid: ${result.error.issues[0]?.message ?? "unknown error"}`,
+        };
+      }
+      return null;
+    }
+    case "lexos_research": {
+      const result = LexosResearchPayloadSchema.safeParse(payload);
+      if (!result.success) {
+        return {
+          code: "MEMORY_PAYLOAD_INVALID",
+          message: `LexosResearch payload invalid: ${result.error.issues[0]?.message ?? "unknown error"}`,
+        };
+      }
+      return null;
+    }
+    case "lexos_argument": {
+      const result = LexosArgumentPayloadSchema.safeParse(payload);
+      if (!result.success) {
+        return {
+          code: "MEMORY_PAYLOAD_INVALID",
+          message: `LexosArgument payload invalid: ${result.error.issues[0]?.message ?? "unknown error"}`,
+        };
+      }
+      return null;
+    }
+    case "lexos_output": {
+      const result = LexosOutputPayloadSchema.safeParse(payload);
+      if (!result.success) {
+        return {
+          code: "MEMORY_PAYLOAD_INVALID",
+          message: `LexosOutput payload invalid: ${result.error.issues[0]?.message ?? "unknown error"}`,
+        };
+      }
+      return null;
+    }
   }
 }
 

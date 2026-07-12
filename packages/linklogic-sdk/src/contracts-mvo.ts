@@ -536,6 +536,54 @@ export const AUDIT_ACTIONS = [
   "approval.granted",
   "approval.rejected",
   "approval.timed_out",
+  // ── LEXOS Litigation domain actions (lexos-litigation.md §4) ──
+  // W0: Client Onboarding
+  "intake.processed",
+  "conflict.checked",
+  "client.accepted",
+  "client.rejected",
+  "kyc.completed",
+  // W1: Client Master Record
+  "memory.updated",
+  "promotion.processed",
+  // W2: Case-Client Story
+  "story.created",
+  "assertions.extracted",
+  "timeline.built",
+  "gaps.identified",
+  // W4: Evidence Intake
+  "evidence.ingested",
+  "evidence.classified",
+  "extraction.queued",
+  "extraction.started",
+  "extraction.completed",
+  "extraction.failed",
+  "extraction.qa_flagged",
+  "custody.logged",
+  "qa.completed",
+  // W5: Support Matrix
+  "support.mapped",
+  "contradictions.found",
+  "assertion.state_changed",
+  // W6: Strategy
+  "strategy.developed",
+  "risks.identified",
+  "research.questions_defined",
+  // W7: Legal Research
+  "citations.verified",
+  "adverse.authority_found",
+  // W8: Argument Drafting
+  "argument.drafted",
+  "claims.linked",
+  "citations.inserted",
+  // W9: Adversarial Review
+  "critique.completed",
+  "weaknesses.found",
+  "revision.checklist_created",
+  // W11: Output Refinement
+  "output.refined",
+  "caveats.preserved",
+  "bundle.prepared",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
@@ -552,6 +600,20 @@ export const AuditEventSubjectSchema = z.object({
   crm_record_id: z.string().optional(),
   project_id: z.string().optional(),
   task_id: z.string().optional(),
+  // ── LEXOS Litigation domain subject IDs ──
+  matter_id: z.string().optional(),
+  intake_id: z.string().optional(),
+  client_id: z.string().optional(),
+  case_story_id: z.string().optional(),
+  assertion_id: z.string().optional(),
+  evidence_id: z.string().optional(),
+  extraction_id: z.string().optional(),
+  support_matrix_item_id: z.string().optional(),
+  strategy_memo_id: z.string().optional(),
+  research_memo_id: z.string().optional(),
+  argument_draft_id: z.string().optional(),
+  adversarial_critique_id: z.string().optional(),
+  output_artifact_id: z.string().optional(),
 });
 export type AuditEventSubject = z.infer<typeof AuditEventSubjectSchema>;
 

@@ -211,6 +211,14 @@ export {
   ComparableBusinessSchema,
   updateMemoryObjectState,
   writeMemoryObject,
+  LexosClientPayloadSchema,
+  LexosMatterPayloadSchema,
+  LexosCaseStoryPayloadSchema,
+  LexosAssertionBundlePayloadSchema,
+  LexosStrategyPayloadSchema,
+  LexosResearchPayloadSchema,
+  LexosArgumentPayloadSchema,
+  LexosOutputPayloadSchema,
 } from "./brain-memory.js";
 export type {
   ComparableBusiness,
@@ -229,6 +237,14 @@ export type {
   ResearchCitation,
   UpdateMemoryStateOptions,
   WriteMemoryObjectOptions,
+  LexosClientPayload,
+  LexosMatterPayload,
+  LexosCaseStoryPayload,
+  LexosAssertionBundlePayload,
+  LexosStrategyPayload,
+  LexosResearchPayload,
+  LexosArgumentPayload,
+  LexosOutputPayload,
 } from "./brain-memory.js";
 
 // LiNKbrain benchmarking and feedback schemas (WP-089)

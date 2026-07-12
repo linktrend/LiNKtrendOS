@@ -112,4 +112,93 @@ describe("validateAuditEnvelope", () => {
     };
     expect(validateAuditEnvelope(ev)).toBeNull();
   });
+
+  it("accepts LEXOS domain actions", () => {
+    const lexosActions = [
+      "intake.processed",
+      "conflict.checked",
+      "client.accepted",
+      "client.rejected",
+      "kyc.completed",
+      "memory.updated",
+      "promotion.processed",
+      "story.created",
+      "assertions.extracted",
+      "timeline.built",
+      "gaps.identified",
+      "evidence.ingested",
+      "evidence.classified",
+      "extraction.queued",
+      "extraction.started",
+      "extraction.completed",
+      "extraction.failed",
+      "extraction.qa_flagged",
+      "custody.logged",
+      "qa.completed",
+      "support.mapped",
+      "contradictions.found",
+      "assertion.state_changed",
+      "strategy.developed",
+      "risks.identified",
+      "research.questions_defined",
+      "citations.verified",
+      "adverse.authority_found",
+      "argument.drafted",
+      "claims.linked",
+      "citations.inserted",
+      "critique.completed",
+      "weaknesses.found",
+      "revision.checklist_created",
+      "output.refined",
+      "caveats.preserved",
+      "bundle.prepared",
+    ] as const;
+
+    for (const action of lexosActions) {
+      expect(CANONICAL_AUDIT_ACTIONS.has(action)).toBe(true);
+      const r = validateAuditEnvelope({ ...baseEvent(), action });
+      expect(r).toBeNull();
+    }
+  });
+
+  it("accepts envelopes referencing LEXOS domain subject IDs", () => {
+    const ev: AuditEvent = {
+      ...baseEvent(),
+      action: "intake.processed",
+      subject: {
+        run_id: "33333333-3333-4333-8333-333333333333",
+        stage_id: "lexos.w0.intake",
+        plugin_id: "lexos_litigation",
+        matter_id: "matter-1",
+        intake_id: "intake-1",
+        client_id: "client-1",
+      },
+    };
+    expect(validateAuditEnvelope(ev)).toBeNull();
+  });
+
+  it("accepts envelopes with all LEXOS subject fields", () => {
+    const ev: AuditEvent = {
+      ...baseEvent(),
+      action: "output.refined",
+      subject: {
+        run_id: "33333333-3333-4333-8333-333333333333",
+        plugin_id: "lexos_litigation",
+        matter_id: "matter-1",
+        intake_id: "intake-1",
+        client_id: "client-1",
+        case_story_id: "story-1",
+        assertion_id: "assertion-1",
+        evidence_id: "evidence-1",
+        extraction_id: "extraction-1",
+        support_matrix_item_id: "smi-1",
+        strategy_memo_id: "strat-1",
+        research_memo_id: "research-1",
+        argument_draft_id: "arg-1",
+        adversarial_critique_id: "crit-1",
+        output_artifact_id: "output-1",
+      },
+    };
+    expect(validateAuditEnvelope(ev)).toBeNull();
+  });
 });
